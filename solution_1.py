@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from keras.datasets import fashion_mnist
+import wandb
+
+wandb.init(project="DA6401_Deep_Learning_Assignment1")
 
 # Load the Fashion-MNIST dataset
 (X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
@@ -20,18 +23,9 @@ class_names = [
     "Ankle boot"
 ]
 
-# Prepare a figure with 2 rows and 5 columns (for 10 total classes)
-plt.figure(figsize=(10, 5))
+images = []
+for i in range(len(class_names)):
+    idx = np.where(y_train == i)[0][0]
+    images.append(X_train[idx])
 
-# Find and plot one sample per class
-for label in range(10):
-    # Get the first index in X_train that corresponds to the current label
-    idx = np.where(y_train == label)[0][0]
-
-    plt.subplot(2, 5, label + 1)
-    plt.imshow(X_train[idx], cmap='gray')
-    plt.title(class_names[label])
-    plt.axis('off')  # Hide axis ticks
-
-plt.tight_layout()
-plt.show()
+wandb.log({"Question 1": [wandb.Image(img, caption=caption) for img, caption in zip(images, class_names)]})
