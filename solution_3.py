@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')  # or 'Qt5Agg', 'MacOSX', etc.
 import matplotlib.pyplot as plt
-from data_utils import load_fashion_mnist, one_hot_encode, get_minibatches
+from utils import load_fashion_mnist, one_hot_encode, get_minibatches
 from model import NeuralNetwork
 from optimizers import (
     SGDOptimizer,
@@ -100,15 +100,15 @@ def main():
         final_accuracies[opt_name] = test_acc
         print(f"{opt_name} final test accuracy: {test_acc * 100:.2f}%")
 
-    # 6) Plot the loss curves for each optimizer
-    plt.figure(figsize=(8, 6))
-    for opt_name, loss_list in all_losses.items():
-        plt.plot(loss_list, label=opt_name)
-    plt.title("Training Loss over Updates for Different Optimizers")
-    plt.xlabel("Update Step")
-    plt.ylabel("Loss")
-    plt.legend()
-    plt.show()
+    # # 6) Plot the loss curves for each optimizer
+    # plt.figure(figsize=(8, 6))
+    # for opt_name, loss_list in all_losses.items():
+    #     plt.plot(loss_list, label=opt_name)
+    # plt.title("Training Loss over Updates for Different Optimizers")
+    # plt.xlabel("Update Step")
+    # plt.ylabel("Loss")
+    # plt.legend()
+    # plt.show()
 
     # 7) Print final accuracies summary
     print("\n=== Final Test Accuracies ===")

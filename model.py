@@ -39,16 +39,13 @@ class NeuralNetwork:
         for i in range(self.num_layers):
             in_dim = layer_sizes[i]  # number of units in layer i
             out_dim = layer_sizes[i + 1]  # number of units in layer i+1
-            # Xavier-like initialization
-            limit = np.sqrt(6.0 / (in_dim + out_dim))
-            self.params[f'W{i}'] = np.random.uniform(-limit, limit, (in_dim, out_dim))
-            # W{i}: (in_dim, out_dim)
+            # Initialize weights and biases randomly
+            self.params[f'W{i}'] = np.random.randn(in_dim, out_dim) * 0.01
             self.params[f'b{i}'] = np.zeros(out_dim)
-            # b{i}: (out_dim,)
 
     def activation(self, a, derivative=False):
         """
-        Applies the chosen activation function (ReLU or Sigmoid) on 'a'.
+        Applies the chosen activation function (ReLU, Sigmoid, or Tanh) on 'a'.
         a: (batch_size, layer_sizes[i+1])
         derivative=True => returns derivative w.r.t. 'a'
         """
@@ -56,13 +53,21 @@ class NeuralNetwork:
             if derivative:
                 return (a > 0).astype(float)
             return np.maximum(0, a)
+
         elif self.activation_name == 'sigmoid':
             if derivative:
                 sig = 1.0 / (1.0 + np.exp(-a))
                 return sig * (1.0 - sig)
             return 1.0 / (1.0 + np.exp(-a))
+
+        elif self.activation_name == 'tanh':
+            if derivative:
+                # derivative of tanh(a) = 1 - tanh^2(a)
+                return 1.0 - np.tanh(a) ** 2
+            return np.tanh(a)
+
         else:
-            raise ValueError("Unsupported activation function. Use 'relu' or 'sigmoid'.")
+            raise ValueError("Unsupported activation function. Use 'relu', 'sigmoid', or 'tanh'.")
 
     def softmax(self, logits):
         """

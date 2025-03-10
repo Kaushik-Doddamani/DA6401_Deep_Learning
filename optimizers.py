@@ -16,58 +16,70 @@ class BaseOptimizer:
 # 1. Plain Stochastic Gradient Descent
 # ------------------------------------------------------------------------------
 class SGDOptimizer(BaseOptimizer):
-    def __init__(self, lr=0.01):
+    def __init__(self, lr=0.01, weight_decay=0.0):
         """
         lr: learning rate
+        weight_decay: L2 regularization coefficient (default=0 )
         """
         self.lr = lr
+        self.weight_decay = weight_decay
 
     def update(self, params, grads):
         """
         Performs in-place update of params with plain SGD:
           param = param - lr * grad
+        Then apply weight decay: W = W - weight_decay * W
         """
-        # param, grad shapes match. E.g. W: (in_dim, out_dim), b: (out_dim,)
         for key in params:
             params[key] -= self.lr * grads[f'd{key}']
+            # apply weight decay only to weights, not biases
+            if key.startswith('W') and self.weight_decay > 0.0:
+                params[key] -= self.weight_decay * params[key]
 
 
 # ------------------------------------------------------------------------------
 # 2. Momentum-based Gradient Descent
 # ------------------------------------------------------------------------------
 class MomentumOptimizer(BaseOptimizer):
-    def __init__(self, lr=0.01, beta=0.9):
+    def __init__(self, lr=0.01, beta=0.9, weight_decay=0.0):
         """
         lr: learning rate
-        momentum: momentum coefficient (beta)
+        beta: momentum coefficient (beta)
+        weight_decay: L2 regularization coefficient (default=0)
         """
         self.lr = lr
         self.beta = beta
-        self.u = {}  # will hold velocity for each param
+        self.weight_decay = weight_decay
+        self.u = {}  # velocity dictionary
 
     def update(self, params, grads):
         """
         u_t = beta * u_{t-1} + grad
         w_{t+1} = w_t - lr * u_t
+        weight decay: w = w - decay*w
         """
         for key in params:
             if key not in self.u:
                 self.u[key] = np.zeros_like(params[key])
             self.u[key] = self.beta * self.u[key] + self.lr * grads[f'd{key}']
             params[key] -= self.u[key]
+            # weight decay
+            if key.startswith('W') and self.weight_decay > 0:
+                params[key] -= self.weight_decay * params[key]
 
 
 # ------------------------------------------------------------------------------
 # 3. Nesterov Accelerated Gradient
 # ------------------------------------------------------------------------------
 class NesterovOptimizer(BaseOptimizer):
-    def __init__(self, lr=0.01, beta=0.9):
+    def __init__(self, lr=0.01, beta=0.9, weight_decay=0.0):
         """
         lr: learning rate
         beta: momentum coefficient
         """
         self.lr = lr
         self.beta = beta
+        self.weight_decay = weight_decay
         self.u = {}  # velocity dictionary
 
     def get_offset(self, params):
@@ -87,6 +99,7 @@ class NesterovOptimizer(BaseOptimizer):
         NAG update step:
           u_t = beta*u_{t-1} + grads
           w_{t+1} = w_t - lr*u_t
+          Then weight decay
         """
         for key in params:
             if key not in self.u:
@@ -96,12 +109,15 @@ class NesterovOptimizer(BaseOptimizer):
             # parameter update
             params[key] -= self.u[key]
 
+            if key.startswith('W') and self.weight_decay > 0:
+                params[key] -= self.weight_decay * params[key]
+
 
 # ------------------------------------------------------------------------------
 # 4. RMSProp
 # ------------------------------------------------------------------------------
 class RMSPropOptimizer(BaseOptimizer):
-    def __init__(self, lr=0.001, beta=0.9, eps=1e-8):
+    def __init__(self, lr=0.001, beta=0.9, eps=1e-8, weight_decay=0.0):
         """
         lr: learning rate
         beta: decay term for moving average of squared gradients
@@ -110,12 +126,14 @@ class RMSPropOptimizer(BaseOptimizer):
         self.lr = lr
         self.beta = beta
         self.eps = eps
+        self.weight_decay = weight_decay
         self.eg2 = {}  # moving average of grad^2
 
     def update(self, params, grads):
         """
         eg2[key] = beta * eg2[key] + (1-beta) * (grad^2)
         param = param - lr * grad / (sqrt(eg2[key]) + eps)
+        Then weight decay
         """
         for key in params:
             if key not in self.eg2:
@@ -125,12 +143,15 @@ class RMSPropOptimizer(BaseOptimizer):
             # update
             params[key] -= self.lr * grads[f'd{key}'] / (np.sqrt(self.eg2[key]) + self.eps)
 
+            if key.startswith('W') and self.weight_decay > 0:
+                params[key] -= self.weight_decay * params[key]
+
 
 # ------------------------------------------------------------------------------
 # 5. Adam
 # ------------------------------------------------------------------------------
 class AdamOptimizer(BaseOptimizer):
-    def __init__(self, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8):
+    def __init__(self, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.0):
         """
         lr: learning rate
         beta1, beta2: decay rates for moment estimates
@@ -140,7 +161,7 @@ class AdamOptimizer(BaseOptimizer):
         self.beta1 = beta1
         self.beta2 = beta2
         self.eps = eps
-
+        self.weight_decay = weight_decay
         self.m = {}  # first moment
         self.v = {}  # second moment
         self.t = 0  # time step
@@ -153,6 +174,7 @@ class AdamOptimizer(BaseOptimizer):
         m_hat = m / (1 - beta1^t)
         v_hat = v / (1 - beta2^t)
         param = param - lr * m_hat / (sqrt(v_hat) + eps)
+        Then weight decay
         """
         self.t += 1
         for key in params:
@@ -168,12 +190,15 @@ class AdamOptimizer(BaseOptimizer):
 
             params[key] -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
 
+            if key.startswith('W') and self.weight_decay > 0:
+                params[key] -= self.weight_decay * params[key]
+
 
 # ------------------------------------------------------------------------------
 # 6. Nadam
 # ------------------------------------------------------------------------------
 class NadamOptimizer(BaseOptimizer):
-    def __init__(self, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8):
+    def __init__(self, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.0):
         """
         lr: learning rate
         beta1, beta2: decay rates for moment estimates
@@ -183,7 +208,7 @@ class NadamOptimizer(BaseOptimizer):
         self.beta1 = beta1
         self.beta2 = beta2
         self.eps = eps
-
+        self.weight_decay = weight_decay
         self.m = {}
         self.v = {}
         self.t = 0
@@ -200,6 +225,7 @@ class NadamOptimizer(BaseOptimizer):
           v_hat = v / (1 - beta2^t)
           m_nadam = beta1*m_hat + (1 - beta1)*g_t / (1 - beta1^t)
           param = param - lr * m_nadam / (sqrt(v_hat) + eps)
+          Then weight decay
         """
         self.t += 1
         for key in params:
@@ -219,3 +245,26 @@ class NadamOptimizer(BaseOptimizer):
             m_nadam = self.beta1 * m_hat + (1 - self.beta1) * g_t / (1 - self.beta1 ** self.t)
 
             params[key] -= self.lr * m_nadam / (np.sqrt(v_hat) + self.eps)
+
+            if key.startswith('W') and self.weight_decay > 0:
+                params[key] -= self.weight_decay * params[key]
+
+
+def create_optimizer_from_config(opt_name, lr, weight_decay=0.0):
+    """
+    Utility function that returns an instance of the chosen optimizer with the given LR.
+    """
+    if opt_name == 'sgd':
+        return SGDOptimizer(lr=lr, weight_decay=weight_decay)
+    elif opt_name == 'momentum':
+        return MomentumOptimizer(lr=lr, beta=0.9, weight_decay=weight_decay)
+    elif opt_name == 'nesterov':
+        return NesterovOptimizer(lr=lr, beta=0.9, weight_decay=weight_decay)
+    elif opt_name == 'rmsprop':
+        return RMSPropOptimizer(lr=lr, beta=0.9, weight_decay=weight_decay)
+    elif opt_name == 'adam':
+        return AdamOptimizer(lr=lr, beta1=0.9, beta2=0.999, weight_decay=weight_decay)
+    elif opt_name == 'nadam':
+        return NadamOptimizer(lr=lr, beta1=0.9, beta2=0.999, weight_decay=weight_decay)
+    else:
+        raise ValueError(f"Unknown optimizer: {opt_name}")
