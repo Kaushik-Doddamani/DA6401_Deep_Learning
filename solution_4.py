@@ -114,7 +114,7 @@ def main():
         sweep_config = yaml.safe_load(f)
 
     # 2. Create sweep in wandb
-    sweep_id = wandb.sweep(sweep_config, project="random_sweep")
+    sweep_id = wandb.sweep(sweep_config, project="DA24S020_DA6401_Deep_Learning_Assignment1")
 
     # 3. Launch the sweep.
     wandb.agent(sweep_id, function=train_model, count=250)

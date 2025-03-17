@@ -50,7 +50,14 @@ class NeuralNetwork:
         a: (batch_size, layer_sizes[i+1])
         derivative=True => returns derivative w.r.t. 'a'
         """
-        if self.activation_name == 'relu':
+        if self.activation_name == 'identity':
+            # f(a) = a
+            # derivative => 1
+            if derivative:
+                return np.ones_like(a)
+            return a
+
+        elif self.activation_name == 'relu':
             if derivative:
                 return (a > 0).astype(float)
             return np.maximum(0, a)
@@ -68,7 +75,8 @@ class NeuralNetwork:
             return np.tanh(a)
 
         else:
-            raise ValueError("Unsupported activation function. Use 'relu', 'sigmoid', or 'tanh'.")
+            raise ValueError("Unsupported activation function. "
+                             "Use 'identity', 'relu', 'sigmoid', or 'tanh'.")
 
     def softmax(self, logits):
         """
