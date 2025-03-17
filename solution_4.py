@@ -36,28 +36,6 @@ def build_model(config):
     return nn
 
 
-# def evaluate(nn, X_data, Y_data, batch_size):
-#     """
-#         Computes the average loss and accuracy of `nn` on (X_data, Y_data).
-#     """
-#     idxs = np.arange(len(X_data))
-#     losses, correct = [], 0
-#     for start in range(0, len(X_data), batch_size):
-#         end = start + batch_size
-#         Xb = X_data[start:end]
-#         Yb = Y_data[start:end]
-#         caches = nn.forward(Xb)
-#         H_last = caches[f'H{nn.num_layers}']
-#         loss = nn.compute_loss(H_last, Yb)
-#         losses.append(loss)
-#         preds = np.argmax(H_last, axis=1)
-#         actual = np.argmax(Yb, axis=1)
-#         correct += np.sum(preds == actual)
-#     avg_loss = np.mean(losses)
-#     acc = correct / len(X_data)
-#     return avg_loss, acc
-
-
 def train_model():
     """
         The function wandb.agent will call to run a single hyperparameter trial.
@@ -91,26 +69,6 @@ def train_model():
     # 6. Training
     batch_size = config.batch_size
     epochs = config.epochs
-
-    # for epoch in range(epochs):
-    #     # Shuffle training data
-    #     indices = np.arange(len(X_train))
-    #     np.random.shuffle(indices)
-    #     X_train = X_train[indices]
-    #     y_train_onehot = y_train_onehot[indices]
-    #
-    #     # mini-batch training
-    #     losses = []
-    #     for start in range(0, len(X_train), batch_size):
-    #         end = start + batch_size
-    #         Xb = X_train[start:end]
-    #         Yb = y_train_onehot[start:end]
-    #         loss = nn.train_batch(Xb, Yb)
-    #         losses.append(loss)
-    #
-    #     # Evaluate on train & val
-    #     train_loss, train_acc = evaluate(nn, X_train, y_train_onehot, batch_size)
-    #     val_loss, val_acc = evaluate(nn, X_val, y_val_onehot, batch_size)
 
     for epoch in range(epochs):
         losses = []
