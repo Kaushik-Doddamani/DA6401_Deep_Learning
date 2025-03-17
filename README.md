@@ -1,6 +1,9 @@
 # DA6401_Deep_Learning
 Source code for assignments of course DA6401
 
+Github Repo [Link](https://github.com/Kaushik-Doddamani/DA6401_Deep_Learning)
+Wandb Report [Link](https://wandb.ai/da24s020-indian-institute-of-technology-madras/DA24S020_DA6401_Deep_Learning_Assignment1/reports/DA6401-Assignment-1--VmlldzoxMTgzMDY5Nw)
+
 Name: Kaushik Ningappa Doddamani
 
 ## Optimizers and Loss Functions
