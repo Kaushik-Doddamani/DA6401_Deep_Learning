@@ -6,6 +6,14 @@ Wandb Report [Link](https://wandb.ai/da24s020-indian-institute-of-technology-mad
 
 Name: Kaushik Ningappa Doddamani
 
+## Code Organization
+- `solution_<number>.py` - contains the solutions to particular question
+- `utils.py` - contains common utitiliy functions.
+- `optimizer.py` - contains all optimizer implementation and their corresponding utility functions.
+- `model.py` - contains model implementation (forward and backward propagation)
+- `train.py` - used for running the code based on arguments passed.
+- `config.yaml` - contains configs for `wandb_sweep`
+
 ## Optimizers and Loss Functions
 
 Optimizers implemented:
