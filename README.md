@@ -58,7 +58,7 @@ The list of hyperparameter configs are as follows:
 - activation functions: sigmoid, tanh, ReLU
 
 ## Questions 5-6
-The solution for Question 5 is available [here]().
+The solution for Question 5 is available in `wandb` report.
 The required plots have been generated using `wandb`
 
 ## Questions 7
