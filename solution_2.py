@@ -1,4 +1,4 @@
-from utils import load_fashion_mnist, one_hot_encode
+from utils import load_fashion_mnist
 from model import NeuralNetwork
 
 

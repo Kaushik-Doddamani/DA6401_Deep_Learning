@@ -2,7 +2,7 @@ import wandb
 import yaml
 import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit
-from utils import one_hot_encode, load_fashion_mnist
+from utils import one_hot_encode, load_fashion_mnist, evaluate_model, get_minibatches
 from model import NeuralNetwork
 from optimizers import create_optimizer_from_config
 
@@ -36,26 +36,26 @@ def build_model(config):
     return nn
 
 
-def evaluate(nn, X_data, Y_data, batch_size):
-    """
-        Computes the average loss and accuracy of `nn` on (X_data, Y_data).
-    """
-    idxs = np.arange(len(X_data))
-    losses, correct = [], 0
-    for start in range(0, len(X_data), batch_size):
-        end = start + batch_size
-        Xb = X_data[start:end]
-        Yb = Y_data[start:end]
-        caches = nn.forward(Xb)
-        H_last = caches[f'H{nn.num_layers}']
-        loss = nn.compute_loss(H_last, Yb)
-        losses.append(loss)
-        preds = np.argmax(H_last, axis=1)
-        actual = np.argmax(Yb, axis=1)
-        correct += np.sum(preds == actual)
-    avg_loss = np.mean(losses)
-    acc = correct / len(X_data)
-    return avg_loss, acc
+# def evaluate(nn, X_data, Y_data, batch_size):
+#     """
+#         Computes the average loss and accuracy of `nn` on (X_data, Y_data).
+#     """
+#     idxs = np.arange(len(X_data))
+#     losses, correct = [], 0
+#     for start in range(0, len(X_data), batch_size):
+#         end = start + batch_size
+#         Xb = X_data[start:end]
+#         Yb = Y_data[start:end]
+#         caches = nn.forward(Xb)
+#         H_last = caches[f'H{nn.num_layers}']
+#         loss = nn.compute_loss(H_last, Yb)
+#         losses.append(loss)
+#         preds = np.argmax(H_last, axis=1)
+#         actual = np.argmax(Yb, axis=1)
+#         correct += np.sum(preds == actual)
+#     avg_loss = np.mean(losses)
+#     acc = correct / len(X_data)
+#     return avg_loss, acc
 
 
 def train_model():
@@ -92,25 +92,37 @@ def train_model():
     batch_size = config.batch_size
     epochs = config.epochs
 
-    for epoch in range(epochs):
-        # Shuffle training data
-        indices = np.arange(len(X_train))
-        np.random.shuffle(indices)
-        X_train = X_train[indices]
-        y_train_onehot = y_train_onehot[indices]
+    # for epoch in range(epochs):
+    #     # Shuffle training data
+    #     indices = np.arange(len(X_train))
+    #     np.random.shuffle(indices)
+    #     X_train = X_train[indices]
+    #     y_train_onehot = y_train_onehot[indices]
+    #
+    #     # mini-batch training
+    #     losses = []
+    #     for start in range(0, len(X_train), batch_size):
+    #         end = start + batch_size
+    #         Xb = X_train[start:end]
+    #         Yb = y_train_onehot[start:end]
+    #         loss = nn.train_batch(Xb, Yb)
+    #         losses.append(loss)
+    #
+    #     # Evaluate on train & val
+    #     train_loss, train_acc = evaluate(nn, X_train, y_train_onehot, batch_size)
+    #     val_loss, val_acc = evaluate(nn, X_val, y_val_onehot, batch_size)
 
-        # mini-batch training
+    for epoch in range(epochs):
         losses = []
-        for start in range(0, len(X_train), batch_size):
-            end = start + batch_size
-            Xb = X_train[start:end]
-            Yb = y_train_onehot[start:end]
-            loss = nn.train_batch(Xb, Yb)
+        minibatches = get_minibatches(X_train, y_train, batch_size, shuffle=True)
+        for X_batch, Y_batch in minibatches:
+            loss = nn.train_batch(X_batch, Y_batch)
             losses.append(loss)
+        print(f"Epoch {epoch+1}, loss: {loss:.4f}")
 
         # Evaluate on train & val
-        train_loss, train_acc = evaluate(nn, X_train, y_train_onehot, batch_size)
-        val_loss, val_acc = evaluate(nn, X_val, y_val_onehot, batch_size)
+        train_loss, train_acc = evaluate_model(nn, X_train, y_train_onehot, batch_size)
+        val_loss, val_acc = evaluate_model(nn, X_val, y_val_onehot, batch_size)
 
         # Log to wandb
         wandb.log({
@@ -122,7 +134,7 @@ def train_model():
         })
 
     # 7. Final test metrics
-    test_loss, test_acc = evaluate(nn, X_test, y_test_onehot, batch_size)
+    test_loss, test_acc = evaluate_model(nn, X_test, y_test_onehot, batch_size)
     wandb.log({
         'test_loss': test_loss,
         'test_accuracy': test_acc
@@ -144,10 +156,10 @@ def main():
         sweep_config = yaml.safe_load(f)
 
     # 2. Create sweep in wandb
-    sweep_id = wandb.sweep(sweep_config, project="trail1")
+    sweep_id = wandb.sweep(sweep_config, project="random_sweep")
 
     # 3. Launch the sweep.
-    wandb.agent(sweep_id, function=train_model, count=1)
+    wandb.agent(sweep_id, function=train_model, count=250)
 
     wandb.finish()
 

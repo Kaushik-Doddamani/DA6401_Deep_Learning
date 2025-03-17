@@ -55,10 +55,10 @@ class NeuralNetwork:
             return np.maximum(0, a)
 
         elif self.activation_name == 'sigmoid':
+            sig = 1.0 / (1.0 + np.exp(-a))
             if derivative:
-                sig = 1.0 / (1.0 + np.exp(-a))
                 return sig * (1.0 - sig)
-            return 1.0 / (1.0 + np.exp(-a))
+            return sig
 
         elif self.activation_name == 'tanh':
             if derivative:

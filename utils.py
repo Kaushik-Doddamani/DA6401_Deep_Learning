@@ -57,3 +57,28 @@ def get_minibatches(X, y, batch_size, shuffle=True):
         end_idx = start_idx + batch_size
         batch_indices = indices[start_idx:end_idx]
         yield X[batch_indices], y[batch_indices]
+
+
+def evaluate_model(model, X_data, y_data, batch_size):
+    """
+    Returns (loss, accuracy) for model on (X_data, y_data).
+    We'll do it in mini-batches to avoid memory issues on large sets.
+    """
+    losses = []
+    correct = 0
+    total = X_data.shape[0]
+
+    minibatches = get_minibatches(X_data, y_data, batch_size, shuffle=False)
+    for Xb, Yb in minibatches:
+        caches = model.forward(Xb)
+        H_last = caches[f'H{model.num_layers}']
+        loss = model.compute_loss(H_last, Yb)
+        losses.append(loss)
+
+        preds = np.argmax(H_last, axis=1)
+        actual = np.argmax(Yb, axis=1)
+        correct += np.sum(preds == actual)
+
+    avg_loss = np.mean(losses)
+    acc = correct / total
+    return avg_loss, acc

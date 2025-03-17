@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')  # or 'Qt5Agg', 'MacOSX', etc.
+matplotlib.use('TkAgg')  # or 'Qt5Agg', 'MacOSX', etc. Use "Agg" for non-interactive plot
 import matplotlib.pyplot as plt
 from utils import load_fashion_mnist, one_hot_encode, get_minibatches
 from model import NeuralNetwork
@@ -37,13 +37,13 @@ def main():
 
     # 2) Define hyperparameters
     layer_sizes = [784, 128, 64, 10]  # Example 2-hidden-layer architecture
-    num_epochs = 3  # Train for 3 epochs (change as desired)
+    num_epochs = 3  # Train for 3 epochs
     batch_size = 64
 
     # 3) List of all optimizers we want to test
     optimizers_to_run = {
-        # "SGD": SGDOptimizer(lr=0.01),
-        # "Momentum": MomentumOptimizer(lr=0.01, beta=0.9),
+        "SGD": SGDOptimizer(lr=0.01),
+        "Momentum": MomentumOptimizer(lr=0.01, beta=0.9),
         "Nesterov": NesterovOptimizer(lr=0.01, beta=0.9),
         "RMSProp": RMSPropOptimizer(lr=0.001, beta=0.9),
         "Adam": AdamOptimizer(lr=0.001, beta1=0.9, beta2=0.999),
@@ -73,10 +73,10 @@ def main():
 
         # List to keep track of the loss after every update (step)
         loss_values = []
-        loss_values_per_epoch = []
 
         # 5) Training loop (over epochs)
         for epoch in range(num_epochs):
+            loss_values_per_epoch = []
             # Use get_minibatches to iterate over all training data in mini-batches
             for X_batch, Y_batch in get_minibatches(X_train, y_train_onehot, batch_size, shuffle=True):
                 # Perform one update step
@@ -89,7 +89,7 @@ def main():
             # Print average loss over the epoch
             print(f"Average loss for epoch {epoch + 1}/{num_epochs} over all "
                   f"mini-batches: {np.mean(loss_values_per_epoch):.4f}")
-            loss_values_per_epoch = []
+
 
         # Store the loss history for plotting
         all_losses[opt_name] = loss_values
