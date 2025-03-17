@@ -15,18 +15,19 @@ class NeuralNetwork:
         - "H" refers to the activation (post-activation).
     """
 
-    def __init__(self, layer_sizes, activation='relu', optimizer=None, seed=42):
+    def __init__(self, layer_sizes, activation='relu', optimizer=None, loss_type='cross_entropy', seed=42):
         """
         layer_sizes: list of layer dimensions, e.g. [784, 128, 64, 10], where layer_sizes[i] = number of units in layer i
         activation:  'relu' or 'sigmoid' for hidden layers
         optimizer:   any object with an update(params, grads) method (e.g., from optimizers.py)
+        loss_type:   'cross_entropy' or 'mse'
         seed:        random seed for reproducibility
         """
         np.random.seed(seed)
-
         self.layer_sizes = layer_sizes
         self.num_layers = len(layer_sizes) - 1
         self.activation_name = activation
+        self.loss_type = loss_type  # store the loss type: 'cross_entropy' or 'mse'
 
         # By default, if no optimizer is given, use plain SGD
         if optimizer is None:
@@ -126,13 +127,23 @@ class NeuralNetwork:
     def compute_loss(self, Y_hat, Y):
         """
         Cross-entropy loss for softmax outputs.
-        Y_hat: (batch_size, layer_sizes[-1]) i.e. (batch_size, 10) predicted probabilities
-        Y:      (batch_size, layer_sizes[-1]) i.e. (batch_size, 10) one-hot labels
+            Y_hat: (batch_size, layer_sizes[-1]) i.e. (batch_size, 10) predicted probabilities
+            Y:     (batch_size, layer_sizes[-1]) i.e. (batch_size, 10) one-hot labels
+        Returns the scalar loss given Y_hat (predictions) and Y (true labels, one-hot).
+            If self.loss_type == 'cross_entropy', we do standard CE loss.
+            If self.loss_type == 'mse', we do mean-squared error.
         """
-        eps = 1e-9
-        log_probs = np.log(Y_hat + eps)  # (batch_size, 10)
-        loss = -np.mean(np.sum(Y * log_probs, axis=1))
-        return loss
+        if self.loss_type == 'cross_entropy':
+            eps = 1e-9
+            log_probs = np.log(Y_hat + eps)  # (batch_size, num_classes) i.e. (batch_size, 10)
+            loss = -np.mean(np.sum(Y * log_probs, axis=1))
+            return loss
+        elif self.loss_type == 'mse':
+            diff = Y_hat - Y  # shape: (batch_size, num_classes) i.e. (batch_size, 10)
+            loss = np.mean(np.sum(diff ** 2, axis=1))  # shape: (batch_size,) -> mean => scalar
+            return loss
+        else:
+            raise ValueError("loss_type must be 'cross_entropy' or 'mse'.")
 
     def backward(self, caches, X, Y):
         """
@@ -148,8 +159,14 @@ class NeuralNetwork:
         # final layer's activation
         H_last = caches[f'H{self.num_layers}']  # (batch_size, 10)
 
-        # derivative of cross-entropy w.r.t. final layer logits => (A_last - Y)
-        dA = H_last - Y  # (batch_size, 10)
+        if self.loss_type == 'cross_entropy':
+            # standard cross_entropy w/ softmax => dA = (Y_hat - Y)
+            dA = H_last - Y
+        elif self.loss_type == 'mse':
+            # derivative of (Y_hat - Y)^2 is 2*(Y_hat - Y)
+            dA = 2 * (H_last - Y)
+        else:
+            raise ValueError("Unsupported loss_type. loss_type must be 'cross_entropy' or 'mse'.")
 
         # loop backward over layers
         for i in reversed(range(self.num_layers)):
@@ -168,6 +185,7 @@ class NeuralNetwork:
                 # propagate error to previous layer
                 A_prev = caches[f'A{i}']  # (batch_size, layer_sizes[i])
                 dH_prev = dA @ W.T  # (batch_size, layer_sizes[i])
+                # chain rule w.r.t. hidden activation
                 dA = dH_prev * self.activation(A_prev, derivative=True)
 
         return grads
