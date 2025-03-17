@@ -130,11 +130,11 @@ def sweep_train():
 
         # wandb log
         wandb.log({
-            'epoch': epoch,
-            'train_loss': train_loss,
-            'train_accuracy': train_acc,
-            'val_loss': val_loss,
-            'val_accuracy': val_acc
+            'Q8_epoch': epoch,
+            'Q8_train_loss': train_loss,
+            'Q8_train_accuracy': train_acc,
+            'Q8_val_loss': val_loss,
+            'Q8_val_accuracy': val_acc
         })
 
         if val_acc > best_val_acc:
@@ -145,7 +145,7 @@ def sweep_train():
 
     # final test
     test_loss, test_acc = evaluate_model(net, X_test, y_test_oh, batch_size)
-    wandb.log({'test_loss': test_loss, 'test_accuracy': test_acc})
+    wandb.log({'Q8_test_loss': test_loss, 'Q8_test_accuracy': test_acc})
     print(f"FINAL TEST:  test_loss={test_loss:.4f}, test_acc={test_acc:.4f}")
 
     # 8. Rename the run so it’s easy to read
@@ -161,7 +161,7 @@ def sweep_train():
 ############################################
 def main():
     # 1) Create the sweep
-    sweep_id = wandb.sweep(sweep_config, project="DA6401_Q8_comparison")
+    sweep_id = wandb.sweep(sweep_config, project="DA24S020_DA6401_Deep_Learning_Assignment1")
 
     # 2) Launch the sweep with N random runs, e.g. 15
     wandb.agent(sweep_id, function=sweep_train, count=50)
